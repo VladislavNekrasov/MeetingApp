@@ -1,1 +1,1 @@
-[]
+[{"id":1,"name":"Meeting Name","responsiblePerson":"John Doe","description":"Meeting description","category":"HUB","type":"LIVE","startDate":[2023,6,24],"endDate":[2023,6,25],"attendees":["Attendee 1","Attendee 2"]}]

@@ -21,8 +21,8 @@ public class MeetingServiceTest {
         meeting.setName("Meeting 1");
         meeting.setResponsiblePerson("John");
         meeting.setDescription("wowowow");
-        meeting.setCategory(Category.TeamBuilding);
-        meeting.setType(Type.Live);
+        meeting.setCategory(Category.TEAM_BUILDING);
+        meeting.setType(Type.LIVE);
         meeting.setStartDate(LocalDate.now());
         meeting.setEndDate(LocalDate.now().plusDays(1));
 

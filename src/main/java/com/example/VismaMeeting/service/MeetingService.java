@@ -3,70 +3,42 @@ package com.example.VismaMeeting.service;
 import com.example.VismaMeeting.model.Category;
 import com.example.VismaMeeting.model.Meeting;
 import com.example.VismaMeeting.model.Type;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.example.VismaMeeting.repository.MeetingRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.io.File;
-import java.io.IOException;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class MeetingService {
-    private static final String DATA_FILE_PATH = "meetings.json";
-    private List<Meeting> meetings;
-    private ObjectMapper objectMapper;
-
-    public MeetingService() {
-        objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        loadMeetingsFromFile();
-    }
-
-    private void loadMeetingsFromFile() {
-        try {
-            meetings = objectMapper.readValue(new File(DATA_FILE_PATH), new TypeReference<List<Meeting>>() {});
-        } catch (IOException e) {
-            meetings = new ArrayList<>();
-        }
-    }
-
-    private void saveMeetingsToFile() {
-        try {
-            objectMapper.writeValue(new File(DATA_FILE_PATH), meetings);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    @Autowired
+    private MeetingRepository meetingRepository;
 
     public Meeting findMeetingById(Long id) {
-        return meetings.stream()
+        return meetingRepository.getMeetings().stream()
                 .filter(meeting -> meeting.getId().equals(id))
                 .findFirst()
                 .orElse(null);
     }
 
     public boolean isPersonBusy(String person, LocalDate startDate, LocalDate endDate) {
-        return meetings.stream()
+        return meetingRepository.getMeetings().stream()
                 .anyMatch(meeting -> !meeting.getResponsiblePerson().equals(person) &&
                         ((meeting.getStartDate().isBefore(startDate) && meeting.getEndDate().isAfter(startDate)) ||
                                 (meeting.getStartDate().isAfter(startDate) && meeting.getStartDate().isBefore(endDate))));
     }
 
     public void create(Meeting meeting) {
-        meetings.add(meeting);
-        saveMeetingsToFile();
+        meetingRepository.getMeetings().add(meeting);
+        meetingRepository.saveMeetingsToFile();
     }
 
     public void delete(Long meetingId, String responsiblePerson) {
         Meeting meeting = findMeetingById(meetingId);
         if (meeting != null && meeting.getResponsiblePerson().equals(responsiblePerson)) {
-            meetings.remove(meeting);
-            saveMeetingsToFile();
+            meetingRepository.getMeetings().remove(meeting);
+            meetingRepository.saveMeetingsToFile();
         } else {
             throw new IllegalArgumentException("Meeting not found or responsible person does not match");
         }
@@ -86,14 +58,14 @@ public class MeetingService {
             throw new IllegalArgumentException("Person is already busy during the meeting time");
         }
             meeting.getAttendees().add(person);
-            saveMeetingsToFile();
+        meetingRepository.saveMeetingsToFile();
     }
 
     public void removePerson(Long meetingId, String person) {
         Meeting meeting = findMeetingById(meetingId);
         if (meeting != null && !meeting.getResponsiblePerson().equals(person)) {
             meeting.getAttendees().remove(person);
-            saveMeetingsToFile();
+            meetingRepository.saveMeetingsToFile();
         } else {
             throw new IllegalArgumentException("Invalid meeting or responsible person cannot be removed.");
         }
@@ -107,7 +79,7 @@ public class MeetingService {
              LocalDate endDate,
              Integer minAttendees) {
 
-        return meetings.stream()
+        return meetingRepository.getMeetings().stream()
                 .filter(meeting -> name == null|| meeting.getName().contains(name))
                 .filter(meeting -> description == null || meeting.getDescription().contains(description))
                 .filter(meeting -> responsiblePerson == null || meeting.getResponsiblePerson().equals(responsiblePerson))
